@@ -41,9 +41,9 @@ Template.leafletViewer.rendered = function() {
 
         // Check that this is actully a URL change
         if( ! imageUrl === layer._url ) {
-            // Set the url correctly
-            layer.setUrl(imageUrl);
-            console.log("Setting url on layer: " + tileImageID );
+          // Set the url correctly
+          layer.setUrl(imageUrl);
+          console.log("Setting url on layer: " + tileImageID );
         }
       } else {
         // If there is not a tile layer for this offset, make one
