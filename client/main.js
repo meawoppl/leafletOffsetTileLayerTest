@@ -1,7 +1,7 @@
 // Subscribe to the relevent collections
 Meteor.subscribe("recent-images");
 // Get the property and image metadata collections
-Props = new Meteor.Collection("prop"); 
+imageMeta = new Meteor.Collection("imageMetadata"); 
 var hostUrl = 'http://kesm.no-ip.org';
 
 Template.leafletViewer.rendered = function() {
@@ -51,20 +51,20 @@ Template.leafletViewer.rendered = function() {
 		    } else {
 			console.log("Adding tile layer to map: " + tileImageID );
 			// If there is not a tile layer for this offset, make one
-			// var layer = new offsetTileLayer(imageUrl, {
-			// 	minZoom: 0,
-			// 	maxZoom: 6,
-			// 	attribution: '3Scan - TAMU',
-			// 	noWrap: true,
-			// 	offset: new L.point(dx, -dy), // totes need to check the signs
-			//     });
-
-			var layer = new L.tileLayer(imageUrl, {
+			var layer = new offsetTileLayer(imageUrl, {
 				minZoom: 0,
 				maxZoom: 6,
 				attribution: '3Scan - TAMU',
-				noWrap: true  
+				noWrap: true,
+				offset: new L.point(dx, -dy), // totes need to check the signs
 			    });
+
+			// var layer = new L.tileLayer(imageUrl, {
+			// 	minZoom: 0,
+			// 	maxZoom: 6,
+			// 	attribution: '3Scan - TAMU',
+			// 	noWrap: true  
+			//     });
 			console.log(layer);
 			// Add it to the map, and the list of offsetsToLayers
 			map.addLayer(layer);
