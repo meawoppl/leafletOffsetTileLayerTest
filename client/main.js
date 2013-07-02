@@ -23,56 +23,56 @@ Template.leafletViewer.rendered = function() {
 
     // Go through all of the valid offsets and either make layers for the image, or set the url appropriately.
     _.each(currentOffsets, function ( currentOffset ) {
-	    // Get the most recent image for this offset
-	    var imageForThisOffset = imageMeta.findOne({tiled:true, offset:currentOffset}, {sort:{time:-1}} );
-	    var tileImageID = imageForThisOffset._id;
-	    
-	    // Compute the URL and offset of this tile layer
-	    var dx = imageForThisOffset.offset * 4096; 	  
-	    var dy = 0; 
-	    var imageUrl = hostUrl + '/tileImages/' + tileImageID + '/{z}/{x}_{y}.jpg';
+      // Get the most recent image for this offset
+      var imageForThisOffset = imageMeta.findOne({tiled:true, offset:currentOffset}, {sort:{time:-1}} );
+      var tileImageID = imageForThisOffset._id;
+      
+      // Compute the URL and offset of this tile layer
+      var dx = imageForThisOffset.offset * 4096;    
+      var dy = 0; 
+      var imageUrl = hostUrl + '/tileImages/' + tileImageID + '/{z}/{x}_{y}.jpg';
 
-	    var layer;
+      var layer;
 
-	    // Check to see if the offset keys to a layer
-	    if( currentOffset in offsetToLayer ) {
-				// Get the layer of interest
-				layer = offsetToLayer[currentOffset];
+      // Check to see if the offset keys to a layer
+      if( currentOffset in offsetToLayer ) {
+        // Get the layer of interest
+        layer = offsetToLayer[currentOffset];
 
-				// Check that this is actully a URL change
-				if( ! imageUrl === layer._url ) {
-				    // Set the url correctly
-				    layer.setUrl(imageUrl);
-				    console.log("Setting url on layer: " + tileImageID );
-				}
-	    } else {
-				// If there is not a tile layer for this offset, make one
-				layer = new offsetTileLayer(imageUrl, {
-					minZoom: 0,
-					maxZoom: 6,
-					attribution: '3Scan - TAMU',
-					noWrap: true,
-					continuousWorld: true,
-					offset: new L.point(dx, -dy), // totes need to check the signs
-		    });
-				
-				console.log(layer);
-				// Add it to the map, and the list of offsetsToLayers
-				map.addLayer(layer);
-				offsetToLayer[imageForThisOffset.offset] = layer;
-    	}
-		});
+        // Check that this is actully a URL change
+        if( ! imageUrl === layer._url ) {
+            // Set the url correctly
+            layer.setUrl(imageUrl);
+            console.log("Setting url on layer: " + tileImageID );
+        }
+      } else {
+        // If there is not a tile layer for this offset, make one
+        layer = new offsetTileLayer(imageUrl, {
+          minZoom: 0,
+          maxZoom: 6,
+          attribution: '3Scan - TAMU',
+          noWrap: true,
+          continuousWorld: true,
+          offset: new L.point(dx, -dy), // totes need to check the signs
+        });
+        
+        console.log(layer);
+        // Add it to the map, and the list of offsetsToLayers
+        map.addLayer(layer);
+        offsetToLayer[imageForThisOffset.offset] = layer;
+      }
+    });
 
     // Clean up layers who no longer appear
     _.each( _.keys( offsetToLayer ), function(thisOffset) {
-	    // We computed the current offsets in a view set, so now we can 
-	    // cull out layers no longer belonging to this offset
-	    if (! ( thisOffset in currentOffsets ) ) {
-				var deadLayer = offsetToLayer[thisOffset];
-				// Remove the layer from the map, and nuke it from our layer list
-				map.removeLayer(deadLayer);
-				delete offsetToLayer[thisOffset];
-	    }
-		});
-	});    
+      // We computed the current offsets in a view set, so now we can 
+      // cull out layers no longer belonging to this offset
+      if (! ( thisOffset in currentOffsets ) ) {
+        var deadLayer = offsetToLayer[thisOffset];
+        // Remove the layer from the map, and nuke it from our layer list
+        map.removeLayer(deadLayer);
+        delete offsetToLayer[thisOffset];
+      }
+    });
+  });    
 };
