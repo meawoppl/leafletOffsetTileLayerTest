@@ -33,13 +33,13 @@ Template.leafletViewer.rendered = function() {
       var imageForThisOffset = imageMeta.findOne({tiled:true, offset:currentOffset}, {sort:{time:-1}} );
       
       // HACK to always use the same image for testing
-      var tileImageID = 'abcdef'; // imageForThisOffset._id;
+      var tileImageID = imageForThisOffset._id;
       
       // Compute the URL and offset of this tile layer
       var dx = imageForThisOffset.offset; 
       console.log('dx: '+dx);   
       var dy = 0; 
-      var imageUrl = hostUrl + '/tileImages/' + tileImageID + '/{z}/{x}_{y}.png';
+      var imageUrl = hostUrl + '/tileImages/' + tileImageID + '/{z}/{x}_{y}.jpg';
 
       var layer;
 
@@ -49,13 +49,14 @@ Template.leafletViewer.rendered = function() {
         layer = offsetToLayer[currentOffset];
 
         // Check that this is actully a URL change
-        if( ! imageUrl === layer._url ) {
+        // if( ! imageUrl === layer._url ) {
           // Set the url correctly
           layer.setUrl(imageUrl);
           console.log("Setting url on layer: " + tileImageID );
-        }
+        // } else {
+        //   console.log('same url...');
+        // }
       } else {
-
         // If there is not a tile layer for this offset, make one
         layer = new offsetTileLayer(imageUrl, {
           minZoom: 0,

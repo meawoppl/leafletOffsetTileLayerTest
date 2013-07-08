@@ -47,9 +47,9 @@ Meteor.startup(function () {
     insertDefaultImageMeta();
   }
 
-  // Every 5 seconds make the oldest image look like the newest one.
-  // Meteor.setInterval(function(){
-  //   var oldestImageID = image.findOne({},{sort:{time:-1}})._id;
-  //   image.update({_id:oldestImageID}, {$set:{time:+new Date}});
-  // }, 5000);
+  //Every 5 seconds make the oldest image look like the newest one.
+  Meteor.setInterval(function(){
+    var oldestImageID = image.findOne({},{sort:{time:-1}})._id;
+    image.update({_id:oldestImageID}, {$set:{time:+new Date}});
+  }, 5000);
 });
