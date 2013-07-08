@@ -33,13 +33,13 @@ Template.leafletViewer.rendered = function() {
       var imageForThisOffset = imageMeta.findOne({tiled:true, offset:currentOffset}, {sort:{time:-1}} );
       
       // HACK to always use the same image for testing
-      var tileImageID = imageForThisOffset._id;
+      var tileImageID = 'abcdef'; // imageForThisOffset._id;
       
       // Compute the URL and offset of this tile layer
       var dx = imageForThisOffset.offset; 
       console.log('dx: '+dx);   
       var dy = 0; 
-      var imageUrl = hostUrl + '/tileImages/' + tileImageID + '/{z}/{x}_{y}.jpg';
+      var imageUrl = hostUrl + '/tileImages/' + tileImageID + '/{z}/{x}_{y}.png';
 
       var layer;
 
