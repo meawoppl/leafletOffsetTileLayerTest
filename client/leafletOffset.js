@@ -8,28 +8,55 @@ offsetTileLayer = L.TileLayer.extend({
     L.TileLayer.prototype.initialize.call(this, url, options);
   },
 
+  _getZoomScaleFactor: function() {
+    var map = this._map,
+        zoom = map.getZoom(),
+        //zoomN = this.options.maxNativeZoom,
+        minZoom = this.options.minZoom,
+        scaleFactor = map.getZoomScale(zoom) / map.getZoomScale(minZoom);
+
+    console.log('scaleFactor for zoom '+zoom+': '+scaleFactor);
+
+    return scaleFactor;
+  },
+
+  _getTileSize: function () {
+    return this.options.tileSize; // * this._getZoomScaleFactor();
+  },
+
+  _getOffset: function () {
+    return this.options.offset.multiplyBy(this._getZoomScaleFactor());
+  },
+
   // tilePoint is the "x:y" key.  This function gets the 
   // pixel position for a given "x:y" key.
   _getTilePos: function (tilePoint) {
     var origin = this._map.getPixelOrigin(),
-    tileSize = this.options.tileSize;
-    
+        tileSize = this._getTileSize(),
+        offset = this._getOffset();
+
+
     var position = tilePoint.multiplyBy(tileSize)
                             .subtract(origin)
-                            .add(this.options.offset);
+                            .add(offset);
 
     //console.log('position x: '+position.x+', y: '+position.y);
 
     return position;
   },
 
+
+
   _update: function () {
     if (!this._map) { return; }
     
     var bounds = this._map.getPixelBounds();
     var zoom = this._map.getZoom();
-    var tileSize = this.options.tileSize;
-    var offset = this.options.offset;
+    var tileSize = this._getTileSize();
+    var offset = this._getOffset();
+
+    console.log('tileSize: '+tileSize);
+    console.log('offset: '+offset);
 
     if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
       return;
@@ -45,6 +72,9 @@ offsetTileLayer = L.TileLayer.extend({
                               offsetMapBounds.max.divideBy(tileSize)._floor());
 
 
+    console.log("tile bounds for _addTilesFromCenterOut: ");
+    console.log(tileBounds);
+
     this._addTilesFromCenterOut(tileBounds);
     
     if (this.options.unloadInvisibleTiles || this.options.reuseTiles) {
@@ -52,12 +82,52 @@ offsetTileLayer = L.TileLayer.extend({
     }
   },
 
-  _getWrapTileNum: function () {
-    // TODO refactor, limit is not valid for non-standard projections
-    console.log('getting wrap tile num...');
-    return Math.pow(2, this._getZoomForUrl());
-  },
+  _addTilesFromCenterOut: function (bounds) {
+    var queue = [],
+        center = bounds.getCenter();
 
+    var j, i, point;
+
+    var tilesNotToLoad = 0;
+
+    for (j = bounds.min.y; j <= bounds.max.y; j++) {
+      for (i = bounds.min.x; i <= bounds.max.x; i++) {
+        point = new L.Point(i, j);
+
+        if (this._tileShouldBeLoaded(point)) {
+          queue.push(point);
+        } else {
+          tilesNotToLoad ++;
+        }
+      }
+    }
+
+    console.log('tilesToLoad: '+queue.length+', tilesNotToLoad: '+tilesNotToLoad);
+
+    var tilesToLoad = queue.length;
+
+    if (tilesToLoad === 0) { return; }
+
+    // load tiles in order of their distance to center
+    queue.sort(function (a, b) {
+      return a.distanceTo(center) - b.distanceTo(center);
+    });
+
+    var fragment = document.createDocumentFragment();
+
+    // if its the first batch of tiles to load
+    if (!this._tilesToLoad) {
+      this.fire('loading');
+    }
+
+    this._tilesToLoad += tilesToLoad;
+
+    for (i = 0; i < tilesToLoad; i++) {
+      this._addTile(queue[i], fragment);
+    }
+
+    this._tileContainer.appendChild(fragment);
+  },
 
   _tileShouldBeLoaded: function (tilePoint) {
     if ((tilePoint.x + ':' + tilePoint.y) in this._tiles) {
@@ -68,6 +138,7 @@ offsetTileLayer = L.TileLayer.extend({
     var options = this.options;
 
     if (!options.continuousWorld) {
+      console.log('Checking wrapTileNum...');
       var limit = this._getWrapTileNum();
   
       // don't load if exceeds world bounds
@@ -83,7 +154,7 @@ offsetTileLayer = L.TileLayer.extend({
 
       console.log('checking whether tile should be loaded.');
 
-      var tileSize = options.tileSize,
+      var tileSize = this._getTileSize(),
       // This code should really look like this in the standard
       // leaflet anyway.  The only difference is that I call the
       // _getTilePos instead of hardcoding multiplying by the 
@@ -109,8 +180,6 @@ offsetTileLayer = L.TileLayer.extend({
         return false; 
       }
     } 
-
-    console.log('Loading tile!');
 
     return true;
   }

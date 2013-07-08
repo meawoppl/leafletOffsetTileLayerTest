@@ -6,6 +6,9 @@ imageMeta = new Meteor.Collection('imageMetadata');
 var hostUrl = 'http://kesm.no-ip.org';
 
 Template.leafletViewer.rendered = function() {
+
+  console.log("Running rendered() callback.");
+
   // Initialize the leaflet map
   map = L.map('leaflet-container', {crs: L.CRS.Simple}).setView([-12000/256, 4098/256], 0); // MRG TODO: remove global after testing.
 
@@ -21,16 +24,22 @@ Template.leafletViewer.rendered = function() {
     var currentOffsets = _.uniq( _.pluck( images, "offset" ) );
     currentOffsets.sort();
 
+    console.log('currentOffsets: ');
+    console.log(currentOffsets);
+
     // Go through all of the valid offsets and either make layers for the image, or set the url appropriately.
     _.each(currentOffsets, function ( currentOffset ) {
       // Get the most recent image for this offset
       var imageForThisOffset = imageMeta.findOne({tiled:true, offset:currentOffset}, {sort:{time:-1}} );
-      var tileImageID = imageForThisOffset._id;
+      
+      // HACK to always use the same image for testing
+      var tileImageID = 'abcdef'; // imageForThisOffset._id;
       
       // Compute the URL and offset of this tile layer
-      var dx = imageForThisOffset.offset * 4096;    
+      var dx = imageForThisOffset.offset; 
+      console.log('dx: '+dx);   
       var dy = 0; 
-      var imageUrl = hostUrl + '/tileImages/' + tileImageID + '/{z}/{x}_{y}.jpg';
+      var imageUrl = hostUrl + '/tileImages/' + tileImageID + '/{z}/{x}_{y}.png';
 
       var layer;
 
@@ -46,6 +55,7 @@ Template.leafletViewer.rendered = function() {
           console.log("Setting url on layer: " + tileImageID );
         }
       } else {
+
         // If there is not a tile layer for this offset, make one
         layer = new offsetTileLayer(imageUrl, {
           minZoom: 0,
@@ -53,7 +63,7 @@ Template.leafletViewer.rendered = function() {
           attribution: '3Scan - TAMU',
           noWrap: true,
           continuousWorld: true,
-          offset: new L.point(dx, -dy), // totes need to check the signs
+          offset: new L.point(-dx, -dy), // totes need to check the signs
         });
         
         console.log(layer);
@@ -63,16 +73,18 @@ Template.leafletViewer.rendered = function() {
       }
     });
 
-    // Clean up layers who no longer appear
-    _.each( _.keys( offsetToLayer ), function(thisOffset) {
-      // We computed the current offsets in a view set, so now we can 
-      // cull out layers no longer belonging to this offset
-      if (! ( thisOffset in currentOffsets ) ) {
-        var deadLayer = offsetToLayer[thisOffset];
-        // Remove the layer from the map, and nuke it from our layer list
-        map.removeLayer(deadLayer);
-        delete offsetToLayer[thisOffset];
-      }
-    });
+    // // Clean up layers who no longer appear
+    // _.each( _.keys( offsetToLayer ), function(thisOffset) {
+    //   // We computed the current offsets in a view set, so now we can 
+    //   // cull out layers no longer belonging to this offset
+    //   if (! ( thisOffset in currentOffsets ) ) {
+    //     var deadLayer = offsetToLayer[thisOffset];
+    //     // Remove the layer from the map, and nuke it from our layer list
+    //     console.log('removing layer: ');
+    //     console.log(deadLayer);
+    //     map.removeLayer(deadLayer);
+    //     delete offsetToLayer[thisOffset];
+    //   }
+    // });
   });    
 };
